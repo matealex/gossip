@@ -37,7 +37,7 @@ typedef enum {
 @property (nonatomic, readonly) int accountId; ///< Account Id, automatically assigned by PJSIP.
 @property (nonatomic, readonly) GSAccountStatus status; ///< Account registration status. Supports KVO notification.
 
-@property (nonatomic, unsafe_unretained) id<GSAccountDelegate> delegate; ///< Account activity delegate.
+@property (nonatomic, weak) id<GSAccountDelegate> delegate; ///< Account activity delegate.
 
 /// Configures account with the specified configuration.
 /** Must be run once and only once before using the GSAccount instance.
