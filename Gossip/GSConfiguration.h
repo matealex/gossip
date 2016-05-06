@@ -15,6 +15,8 @@ typedef enum {
     GSUDP6TransportType, ///< UDP on IPv6 transport type.
     GSTCPTransportType, ///< TCP transport type.
     GSTCP6TransportType, ///< TCP on IPv6 transport type.
+    GSTLSTransportType, /// TLS transport type.
+    GSTLS6TransportType /// TLS on IPv6 transport type.
 } GSTransportType;
 
 
