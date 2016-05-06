@@ -30,6 +30,7 @@
     _authRealm = @"*";
     _username = nil;
     _password = nil;
+    _userAgent = nil;
 
     _enableRingback = YES;
     _ringbackFilename = @"ringtone.wav";
@@ -47,6 +48,7 @@
     _authRealm = nil;
     _username = nil;
     _password = nil;
+    _userAgent = nil;
     _ringbackFilename = nil;
 }
 
@@ -61,6 +63,7 @@
     replica.authRealm = self.authRealm;
     replica.username = self.username;
     replica.password = self.password;
+    replica.userAgent = self.userAgent;
     
     replica.enableStatusPublishing = self.enableStatusPublishing;
 

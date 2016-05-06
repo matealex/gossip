@@ -18,6 +18,7 @@
 @property (nonatomic, copy) NSString *authRealm; ///< Authentication realm. Defaults to "*".
 @property (nonatomic, copy) NSString *username; ///< SIP username.
 @property (nonatomic, copy) NSString *password; ///< SIP password.
+@property (nonatomic, copy) NSString *userAgent; ///< SIP user-agent
 
 @property (nonatomic) BOOL enableStatusPublishing; ///< Enable online/status publishing for services that support them.
 

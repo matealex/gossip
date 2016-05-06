@@ -88,7 +88,18 @@
     
     pjsua_config_default(&uaConfig);
     [GSDispatch configureCallbacksForAgent:&uaConfig];
-    
+
+	unsigned long user_agent_string_length = _config.account.userAgent.length + 1;
+	char *user_agent_string = malloc(sizeof(char) * (user_agent_string_length));
+	BOOL stringConversionSuccess = [_config.account.userAgent getCString:user_agent_string maxLength:user_agent_string_length encoding:NSUTF8StringEncoding];
+
+	if (stringConversionSuccess) {
+		pj_str_t user_agent = {user_agent_string, user_agent_string_length - 1};
+		uaConfig.user_agent = user_agent;
+	} else {
+		free(user_agent_string);
+	}
+
     pjsua_logging_config_default(&logConfig);
     logConfig.level = _config.logLevel;
     logConfig.console_level = _config.consoleLogLevel;
