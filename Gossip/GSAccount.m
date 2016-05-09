@@ -69,6 +69,8 @@
     // prepare account config
     pjsua_acc_config accConfig;
     pjsua_acc_config_default(&accConfig);
+    accConfig.reg_retry_interval = 10;
+    accConfig.reg_first_retry_interval = 2;
     
     accConfig.id = [GSPJUtil PJAddressWithString:_config.address];
     accConfig.reg_uri = [GSPJUtil PJAddressWithString:_config.domain];
