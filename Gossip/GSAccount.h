@@ -50,4 +50,5 @@ typedef enum {
 - (BOOL)disconnect; ///< Unregister from the SIP registration server and disconnects.
 - (void)startKeepAlive;
 - (void)performKeepAlive;
+- (NSString *)statusText; ///< info.status_text from the underlying pjsip `info` data structure
 @end

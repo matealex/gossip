@@ -15,6 +15,10 @@
 
 static pjsip_transport *the_transport;
 
+@interface GSAccount()
+@property(nonatomic,strong) NSString *statusText;
+@end
+
 @implementation GSAccount {
     GSAccountConfiguration *_config;
     NSDate *_registrationExpiration;
@@ -219,6 +223,7 @@ static pjsip_transport *the_transport;
     
     pjsua_acc_info info;
     GSReturnIfFails(pjsua_acc_get_info(accountId, &info));
+    self.statusText = [[GSPJUtil stringWithPJString:&info.status_text] copy];
 
     if (info.reg_last_err != PJ_SUCCESS) {
         accStatus = GSAccountStatusInvalid;
