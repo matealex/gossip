@@ -50,6 +50,7 @@ typedef enum {
 
 - (BOOL)setVolume:(float)volume; ///< Sets the call volume. Returns YES if successful.
 - (BOOL)setMicVolume:(float)volume; ///< Sets the microphone volume. Returns YES if successful.
+- (void)setRingback:(GSRingback *)ringback; //sets the ringback for the call
 
 - (BOOL)begin; ///< Begins calling for outgoing call or answer incoming call.
 - (BOOL)end; ///< Stop calling and/or hangup call.

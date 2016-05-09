@@ -50,6 +50,7 @@
     _password = nil;
     _userAgent = nil;
     _ringbackFilename = nil;
+    _registrationTimeout = nil;
 }
 
 
@@ -64,7 +65,9 @@
     replica.username = self.username;
     replica.password = self.password;
     replica.userAgent = self.userAgent;
-    
+
+    replica.registrationTimeout = self.registrationTimeout;
+
     replica.enableStatusPublishing = self.enableStatusPublishing;
 
     replica.enableRingback = self.enableRingback;

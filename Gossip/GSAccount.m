@@ -13,18 +13,24 @@
 #import "PJSIP.h"
 #import "Util.h"
 
+static pjsip_transport *the_transport;
 
 @implementation GSAccount {
     GSAccountConfiguration *_config;
+    NSDate *_registrationExpiration;
+    BOOL isChangingIP;
+    int transportReferenceCount;
 }
 
 - (id)init {
     if (self = [super init]) {
         _accountId = PJSUA_INVALID_ID;
         _status = GSAccountStatusOffline;
+        _registrationExpiration = nil;
         _config = nil;
-        
+        isChangingIP = NO;
         _delegate = nil;
+        transportReferenceCount = 0;
         
         NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
         [center addObserver:self
@@ -38,6 +44,10 @@
         [center addObserver:self
                    selector:@selector(registrationStateDidChange:)
                        name:GSSIPRegistrationStateDidChangeNotification
+                     object:[GSDispatch class]];
+        [center addObserver:self
+                   selector:@selector(transportStateDidChange:)
+                       name:GSSIPTransportStateDidChangeNotification
                      object:[GSDispatch class]];
     }
     return self;
@@ -62,6 +72,9 @@
     return _config;
 }
 
+- (NSDate*)registrationExpiration{
+    return _registrationExpiration;
+}
 
 - (BOOL)configure:(GSAccountConfiguration *)configuration {
     _config = [configuration copy];
@@ -94,6 +107,7 @@
     
     accConfig.cred_count = 1;
     accConfig.cred_info[0] = creds;
+    accConfig.reg_timeout = [configuration.registrationTimeout intValue];
 
     // finish
     GSReturnNoIfFails(pjsua_acc_add(&accConfig, PJ_TRUE, &_accountId));    
@@ -117,6 +131,14 @@
     return YES;
 }
 
+- (void)startKeepAlive{
+    pjsua_acc_set_online_status(_accountId, PJ_TRUE);
+}
+
+-(void)performKeepAlive{
+    pj_thread_sleep(5000);
+}
+
 
 - (void)setStatus:(GSAccountStatus)newStatus {
     if (_status == newStatus) // don't send KVO notices unless it really changes.
@@ -129,6 +151,8 @@
 - (void)didReceiveIncomingCall:(NSNotification *)notif {
     pjsua_acc_id accountId = GSNotifGetInt(notif, GSSIPAccountIdKey);
     pjsua_call_id callId = GSNotifGetInt(notif, GSSIPCallIdKey);
+    pjsip_rx_data * data = GSNotifGetPointer(notif, GSSIPDataKey);
+
     if (accountId == PJSUA_INVALID_ID || accountId != _accountId)
         return;
     
@@ -136,23 +160,40 @@
     __block id delegate_ = _delegate;
     dispatch_async(dispatch_get_main_queue(), ^{
         GSCall *call = [GSCall incomingCallWithId:callId toAccount:self_];
-        if (![delegate_ respondsToSelector:@selector(account:didReceiveIncomingCall:)])
+        if (![delegate_ respondsToSelector:@selector(account:didReceiveIncomingCall:withMessage:)])
             return; // call is disposed/hungup on dealloc
+        NSString *msgString = nil;
+        if (data->msg_info.msg_buf) {
+            msgString = [NSString stringWithUTF8String:data->msg_info.msg_buf];
+        }
+        [delegate_ account:self didReceiveIncomingCall:call withMessage:msgString];
         
-        [delegate_ performSelector:@selector(account:didReceiveIncomingCall:)
-                        withObject:self_
-                        withObject:call];
     });
 }
 
 - (void)registrationDidStart:(NSNotification *)notif {
     pjsua_acc_id accountId = GSNotifGetInt(notif, GSSIPAccountIdKey);
-    pj_bool_t renew = GSNotifGetBool(notif, GSSIPRenewKey);
+    pjsua_reg_info * regInfo = GSNotifGetPointer(notif, GSSIPRegInfoKey);
     if (accountId == PJSUA_INVALID_ID || accountId != _accountId)
         return;
     
+    struct pjsip_regc_cbparam *rp = regInfo->cbparam;
+
+    if (rp != NULL && the_transport != rp->rdata->tp_info.transport) {
+        /* Registration success */
+        if (the_transport) {
+            pjsip_transport_dec_ref(the_transport);
+            the_transport = NULL;
+        }
+        /* Save transport instance so that we can close it later when
+         * new IP address is detected.
+         */
+        the_transport = rp->rdata->tp_info.transport;
+        pjsip_transport_add_ref(the_transport);
+    }
+
     GSAccountStatus accStatus = 0;
-    accStatus = renew ? GSAccountStatusConnecting : GSAccountStatusDisconnecting;
+    accStatus = regInfo->renew ? GSAccountStatusConnecting : GSAccountStatusDisconnecting;
 
     __block id self_ = self;
     dispatch_async(dispatch_get_main_queue(), ^{ [self_ setStatus:accStatus]; });
@@ -160,6 +201,9 @@
 
 - (void)registrationStateDidChange:(NSNotification *)notif {
     pjsua_acc_id accountId = GSNotifGetInt(notif, GSSIPAccountIdKey);
+    pjsua_reg_info * regInfo = GSNotifGetPointer(notif, GSSIPRegInfoKey);
+    struct pjsip_regc_cbparam *rp = regInfo->cbparam;
+
     if (accountId == PJSUA_INVALID_ID || accountId != _accountId)
         return;
     
@@ -175,17 +219,62 @@
         pjsip_status_code code = info.status;
         if (code == 0 || (info.online_status == PJ_FALSE)) {
             accStatus = GSAccountStatusOffline;
+            if (isChangingIP) {
+                isChangingIP = NO;
+                dispatch_after(1, dispatch_get_main_queue(), ^{
+                    [self connect];
+                });
+            }
         } else if (PJSIP_IS_STATUS_IN_CLASS(code, 100) || PJSIP_IS_STATUS_IN_CLASS(code, 300)) {
             accStatus = GSAccountStatusConnecting;
         } else if (PJSIP_IS_STATUS_IN_CLASS(code, 200)) {
             accStatus = GSAccountStatusConnected;
+
         } else {
+            if (code == 408) {
+                [self connect];
+            }
             accStatus = GSAccountStatusInvalid;
+        }
+    }
+
+    if (rp->code/100 == 2 && rp->expiration > 0 && rp->contact_cnt > 0) {
+        /* We already saved the transport instance */
+    } else {
+        if (the_transport) {
+            pjsip_transport_dec_ref(the_transport);
+            the_transport = NULL;
         }
     }
     
     __block id self_ = self;
     dispatch_async(dispatch_get_main_queue(), ^{ [self_ setStatus:accStatus]; });
+}
+
+- (BOOL)handleIPChange{
+    if (self.status == GSAccountStatusOffline) {
+        return NO;
+    }
+
+    isChangingIP = YES;
+
+    if (the_transport) {
+        GSReturnNoIfFails(pjsip_transport_shutdown(the_transport));
+        pjsip_transport_dec_ref(the_transport);
+        the_transport = NULL;
+    }
+
+    return [self disconnect];
+}
+
+- (void)transportStateDidChange:(NSNotification *)notif {
+    pjsip_transport_state state = GSNotifGetInt(notif, GSSIPTransportStateKey);
+    pjsip_transport *tp = GSNotifGetPointer(notif, GSSIPTransportKey);
+
+    if (state == PJSIP_TP_STATE_DISCONNECTED && the_transport == tp) {
+        pjsip_transport_dec_ref(the_transport);
+        the_transport = NULL;
+    }
 }
 
 @end

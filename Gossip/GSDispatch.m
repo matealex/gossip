@@ -8,8 +8,9 @@
 #import "GSDispatch.h"
 
 
-void onRegistrationStarted(pjsua_acc_id accountId, pj_bool_t renew);
-void onRegistrationState(pjsua_acc_id accountId);
+void onRegistrationStarted(pjsua_acc_id accountId, pjsua_reg_info *info);
+void onRegistrationState(pjsua_acc_id accountId, pjsua_reg_info *info);
+void onTransportState(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info *info);
 void onIncomingCall(pjsua_acc_id accountId, pjsua_call_id callId, pjsip_rx_data *rdata);
 void onCallMediaState(pjsua_call_id callId);
 void onCallState(pjsua_call_id callId, pjsip_event *e);
@@ -25,8 +26,9 @@ static dispatch_queue_t _queue = NULL;
 }
 
 + (void)configureCallbacksForAgent:(pjsua_config *)uaConfig {
-    uaConfig->cb.on_reg_started = &onRegistrationStarted;
-    uaConfig->cb.on_reg_state = &onRegistrationState;
+    uaConfig->cb.on_reg_started2 = &onRegistrationStarted;
+    uaConfig->cb.on_reg_state2 = &onRegistrationState;
+    uaConfig->cb.on_transport_state = &onTransportState;
     uaConfig->cb.on_incoming_call = &onIncomingCall;
     uaConfig->cb.on_call_media_state = &onCallMediaState;
     uaConfig->cb.on_call_state = &onCallState;
@@ -39,13 +41,12 @@ static dispatch_queue_t _queue = NULL;
 //   orthogonaly/globally if we're to scale. But right now a few
 //   dictionary lookups on the receiver side probably wouldn't hurt much.
 
-+ (void)dispatchRegistrationStarted:(pjsua_acc_id)accountId renew:(pj_bool_t)renew {
-    NSLog(@"Gossip: dispatchRegistrationStarted(%d, %d)", accountId, renew);
++ (void)dispatchRegistrationStarted:(pjsua_acc_id)accountId registrationInfo:(pjsua_reg_info *)regInfo {
+    NSLog(@"Gossip: dispatchRegistrationStarted(%d)", accountId);
     
     NSDictionary *info = nil;
-    info = [NSDictionary dictionaryWithObjectsAndKeys:
-            [NSNumber numberWithInt:accountId], GSSIPAccountIdKey,
-            [NSNumber numberWithBool:renew], GSSIPRenewKey, nil];
+    info = @{GSSIPAccountIdKey : [NSNumber numberWithInt:accountId] ,
+             GSSIPRegInfoKey : [NSValue valueWithPointer:regInfo]};
     
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center postNotificationName:GSSIPRegistrationDidStartNotification
@@ -53,15 +54,28 @@ static dispatch_queue_t _queue = NULL;
                         userInfo:info];
 }
 
-+ (void)dispatchRegistrationState:(pjsua_acc_id)accountId {
++ (void)dispatchRegistrationState:(pjsua_acc_id)accountId registrationInfo:(pjsua_reg_info *)regInfo{
     NSLog(@"Gossip: dispatchRegistrationState(%d)", accountId);
     
     NSDictionary *info = nil;
-    info = [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:accountId]
-                                       forKey:GSSIPAccountIdKey];
+    info = @{GSSIPAccountIdKey : [NSNumber numberWithInt:accountId] ,
+             GSSIPRegInfoKey : [NSValue valueWithPointer:regInfo]};
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center postNotificationName:GSSIPRegistrationStateDidChangeNotification
+                          object:self
+                        userInfo:info];
+}
+
++ (void)dispatchTransportState:(pjsip_transport*)transport state:(pjsip_transport_state)state info:(const pjsip_transport_state_info *)transportInfo{
+    NSDictionary *info = nil;
+
+    info = @{GSSIPTransportInfoKey : [NSValue valueWithPointer:transportInfo],
+             GSSIPTransportKey : [NSValue valueWithPointer:transport],
+             GSSIPTransportStateKey : [NSNumber numberWithInt:state]};
+
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center postNotificationName:GSSIPTransportStateDidChangeNotification
                           object:self
                         userInfo:info];
 }
@@ -131,13 +145,12 @@ static inline void dispatch(dispatch_block_t block) {
     }
 }
 
-
-void onRegistrationStarted(pjsua_acc_id accountId, pj_bool_t renew) {
-    dispatch(^{ [GSDispatch dispatchRegistrationStarted:accountId renew:renew]; });
+void onRegistrationStarted(pjsua_acc_id accountId, pjsua_reg_info *info) {
+    dispatch(^{ [GSDispatch dispatchRegistrationStarted:accountId registrationInfo:info];});
 }
 
-void onRegistrationState(pjsua_acc_id accountId) {
-    dispatch(^{ [GSDispatch dispatchRegistrationState:accountId]; });
+void onRegistrationState(pjsua_acc_id accountId, pjsua_reg_info *info) {
+    dispatch(^{ [GSDispatch dispatchRegistrationState:accountId registrationInfo:info];});
 }
 
 void onIncomingCall(pjsua_acc_id accountId, pjsua_call_id callId, pjsip_rx_data *rdata) {
@@ -150,4 +163,8 @@ void onCallMediaState(pjsua_call_id callId) {
 
 void onCallState(pjsua_call_id callId, pjsip_event *e) {
     dispatch(^{ [GSDispatch dispatchCallState:callId event:e]; });
+}
+
+void onTransportState(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info *info){
+    dispatch(^{ [GSDispatch dispatchTransportState:tp state:state info:info]; });
 }
