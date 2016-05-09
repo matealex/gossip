@@ -134,6 +134,7 @@
     // TODO: Make separate class? since things like public_addr might be useful to some.
     pjsua_transport_config transportConfig;
     pjsua_transport_config_default(&transportConfig);
+    transportConfig.port = 5060;
     
     pjsip_transport_type_e transportType = 0;
     switch (_config.transportType) {
@@ -144,8 +145,13 @@
         case GSTLSTransportType: transportType = PJSIP_TRANSPORT_TLS; break;
         case GSTLS6TransportType: transportType = PJSIP_TRANSPORT_TLS6; break;
     }
-    
-    GSReturnNoIfFails(pjsua_transport_create(transportType, &transportConfig, &_transportId));
+
+    pj_status_t status = (pjsua_transport_create(transportType, &transportConfig, &_transportId));
+    if (status != PJ_SUCCESS) {
+        pjsua_transport_config_default(&transportConfig);
+        transportConfig.port = 0;
+        GSReturnNoIfFails(pjsua_transport_create(transportType, &transportConfig, &_transportId));
+    }
     [self setStatus:GSUserAgentStateConfigured];
 
     // configure account
