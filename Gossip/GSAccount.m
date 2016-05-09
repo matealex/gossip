@@ -119,6 +119,9 @@ static pjsip_transport *the_transport;
     accConfig.cred_info[0] = creds;
     accConfig.reg_timeout = [configuration.registrationTimeout intValue];
 
+    // TROY - CT - Allow setting of this by the caller
+    accConfig.use_rfc5626 = _config.useRfc5626;
+
     // finish
     GSReturnNoIfFails(pjsua_acc_add(&accConfig, PJ_TRUE, &_accountId));    
     return YES;
