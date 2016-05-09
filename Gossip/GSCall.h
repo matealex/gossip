@@ -71,4 +71,6 @@ typedef NS_ENUM(NSInteger, GSCallMediaState) {
 - (NSString *)remoteInfo;
 - (NSString *)remoteContact;
 
+- (void)send180Ringing;
+
 @end
