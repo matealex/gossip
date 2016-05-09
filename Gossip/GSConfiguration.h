@@ -19,6 +19,14 @@ typedef enum {
     GSTLS6TransportType /// TLS on IPv6 transport type.
 } GSTransportType;
 
+typedef enum {
+    GSQOSTypeBestEffort,
+    GSQOSTypeBackground,
+    GSQOSTypeVideo,
+    GSQOSTypeVoice,
+    GSQOSTypeControl
+} GSQosType;
+
 
 /// Main class for configuring a SIP user agent.
 @interface GSConfiguration : NSObject <NSCopying>
@@ -27,6 +35,7 @@ typedef enum {
 @property (nonatomic) unsigned int consoleLogLevel; ///< PJSIP console output level.
 
 @property (nonatomic) GSTransportType transportType; ///< Transport type to use for connection.
+@property (nonatomic) GSQosType qosType; ///< QOS type used for connection.
 
 @property (nonatomic) unsigned int clockRate; ///< PJSIP clock rate.
 @property (nonatomic) unsigned int soundClockRate; ///< PJSIP sound clock rate.
