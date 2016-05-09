@@ -177,6 +177,16 @@
     return YES;
 }
 
+- (BOOL)hold {
+    GSReturnNoIfFails(pjsua_call_set_hold(_callId, nil));
+    return YES;
+}
+
+- (BOOL)releaseHold {
+    GSReturnNoIfFails(pjsua_call_reinvite(_callId, PJSUA_CALL_UNHOLD, nil));
+    return YES;
+}
+
 
 - (void)startRingback {
     if (!_ringback || _ringback.isPlaying)
