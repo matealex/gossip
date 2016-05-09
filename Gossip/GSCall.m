@@ -21,8 +21,9 @@
     pjsua_call_id _callId;
     float _volume;
     float _micVolume;
-    float _volumeScale;
     NSTimer *_timer;
+    float _volumeScaleTx;
+    float _volumeScaleRx;
 }
 
 + (id)outgoingCallToUri:(NSString *)remoteUri fromAccount:(GSAccount *)account {
@@ -58,9 +59,10 @@
             _ringback = [GSRingback ringbackWithSoundNamed:config.ringbackFilename];
         }
 
-        _volumeScale = [GSUserAgent sharedAgent].configuration.volumeScale;
-        _volume = 1.0 / _volumeScale;
-        _micVolume = 1.0 / _volumeScale;
+        _volumeScaleTx = [GSUserAgent sharedAgent].configuration.volumeScaleTx;
+        _volumeScaleRx = [GSUserAgent sharedAgent].configuration.volumeScaleRx;
+        _volume = 1.0 / _volumeScaleRx;
+        _micVolume = 1.0 / _volumeScaleTx;
 
         NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
         [center addObserver:self
@@ -409,8 +411,8 @@ static PJ_DEF(pj_status_t) on_pjsua_wav_file_end_callback(pjmedia_port* media_po
     if (callInfo.media_status == PJSUA_CALL_MEDIA_ACTIVE) {
         
         // scale volume as per configured volume scale
-        volume *= _volumeScale;
-        micVolume *= _volumeScale;
+        volume *= _volumeScaleRx;
+        micVolume *= _volumeScaleTx;
         pjsua_conf_port_id callPort = pjsua_call_get_conf_port(_callId);
         GSReturnNoIfFails(pjsua_conf_adjust_rx_level(callPort, volume));
         GSReturnNoIfFails(pjsua_conf_adjust_tx_level(callPort, micVolume));
