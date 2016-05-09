@@ -135,6 +135,7 @@
     pjsua_transport_config transportConfig;
     pjsua_transport_config_default(&transportConfig);
     transportConfig.port = 5060;
+    transportConfig.qos_type = PJ_QOS_TYPE_CONTROL;
     
     pjsip_transport_type_e transportType = 0;
     switch (_config.transportType) {
@@ -150,6 +151,7 @@
     if (status != PJ_SUCCESS) {
         pjsua_transport_config_default(&transportConfig);
         transportConfig.port = 0;
+        transportConfig.qos_type = PJ_QOS_TYPE_CONTROL;
         GSReturnNoIfFails(pjsua_transport_create(transportType, &transportConfig, &_transportId));
     }
     [self setStatus:GSUserAgentStateConfigured];
