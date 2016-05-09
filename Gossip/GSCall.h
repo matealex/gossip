@@ -57,4 +57,7 @@ typedef enum {
 
 - (BOOL)sendDTMFDigits:(NSString *)digits; ///< Sends DTMF digits over the call.
 
+- (NSString *)remoteInfo;
+- (NSString *)remoteContact;
+
 @end

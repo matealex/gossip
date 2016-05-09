@@ -186,6 +186,19 @@
     [_ringback stop];
 }
 
+- (NSString *)remoteInfo {
+    pjsua_call_info callInfo;
+    pjsua_call_get_info(_callId, &callInfo);
+
+    return [[GSPJUtil stringWithPJString:&callInfo.remote_info] copy];
+}
+
+- (NSString *)remoteContact {
+    pjsua_call_info callInfo;
+    pjsua_call_get_info(_callId, &callInfo);
+
+    return [[GSPJUtil stringWithPJString:&callInfo.remote_contact] copy];
+}
 
 - (void)callStateDidChange:(NSNotification *)notif {
     pjsua_call_id callId = GSNotifGetInt(notif, GSSIPCallIdKey);
