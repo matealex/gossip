@@ -11,6 +11,7 @@
 #define GSConstDefine(name_) extern NSString *const name_;
 
 GSConstDefine(GSSIPRegistrationStateDidChangeNotification);
+GSConstDefine(GSSIPTransportStateDidChangeNotification);
 GSConstDefine(GSSIPRegistrationDidStartNotification);
 GSConstDefine(GSSIPCallStateDidChangeNotification);
 GSConstDefine(GSSIPIncomingCallNotification);
@@ -20,9 +21,14 @@ GSConstDefine(GSSIPVolumeDidChangeNotification);
 GSConstDefine(GSVolumeDidChangeNotification);
 
 GSConstDefine(GSSIPAccountIdKey);
+GSConstDefine(GSSIPRegInfoKey);
 GSConstDefine(GSSIPRenewKey);
 GSConstDefine(GSSIPCallIdKey);
 GSConstDefine(GSSIPDataKey);
+
+GSConstDefine(GSSIPTransportKey);
+GSConstDefine(GSSIPTransportStateKey);
+GSConstDefine(GSSIPTransportInfoKey);
 
 GSConstDefine(GSVolumeKey);
 GSConstDefine(GSMicVolumeKey);
