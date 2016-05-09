@@ -116,6 +116,7 @@
     mediaConfig.clock_rate = _config.clockRate;
     mediaConfig.snd_clock_rate = _config.soundClockRate;
     mediaConfig.ec_tail_len = 500; // change echo Tail Length to 500ms
+    mediaConfig.no_vad = 1; //disable VoiceActivityDetection
     
     GSReturnNoIfFails(pjsua_init(&uaConfig, &logConfig, &mediaConfig));
     
