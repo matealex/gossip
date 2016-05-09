@@ -187,6 +187,24 @@
     return YES;
 }
 
+- (BOOL)disconnectAudioForGSMCall
+{
+    pjsua_set_no_snd_dev();
+    return YES;
+}
+
+- (BOOL)reconnectAudioAfterGSMCall
+{
+    int capture_dev;
+    int playback_dev;
+
+    pjsua_get_snd_dev( &capture_dev, &playback_dev);
+
+    pj_status_t status = pjsua_set_snd_dev(capture_dev, playback_dev);
+
+    return (status == PJ_SUCCESS)?YES:NO;
+}
+
 
 - (void)startRingback {
     if (!_ringback || _ringback.isPlaying)
@@ -298,10 +316,9 @@
     dispatch_async(dispatch_get_main_queue(), ^{ [self_ setMediaState:mediaState]; });
 
     if (callInfo.media_status == PJSUA_CALL_MEDIA_ACTIVE) {
-        pjsua_conf_port_id callPort = pjsua_call_get_conf_port(_callId);
-        GSReturnIfFails(pjsua_conf_connect(callPort, 0));
-        GSReturnIfFails(pjsua_conf_connect(0, callPort));
-        
+        GSReturnIfFails(pjsua_conf_connect(callInfo.conf_slot, 0));
+        GSReturnIfFails(pjsua_conf_connect(0, callInfo.conf_slot));
+
         [self adjustVolume:_volume mic:_micVolume];
     }
 }
