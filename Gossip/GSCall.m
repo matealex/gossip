@@ -83,7 +83,10 @@
         _ringback = nil;
     }
 
-    if (_callId != PJSUA_INVALID_ID && pjsua_call_is_active(_callId)) {
+    /// After pjsip is destroyed, max calls is 0 and we get assertion error in pjsua_call_is_active
+    unsigned int max_calls = pjsua_call_get_max_count();
+
+    if (_callId != PJSUA_INVALID_ID && max_calls != 0 && pjsua_call_is_active(_callId)) {
         GSLogIfFails(pjsua_call_hangup(_callId, 0, NULL, NULL));
     }
     
