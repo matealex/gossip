@@ -65,6 +65,7 @@ typedef NS_ENUM(NSInteger, GSCallMediaState) {
 - (BOOL)end; ///< Stop calling and/or hangup call.
 
 - (BOOL)sendDTMFDigits:(NSString *)digits; ///< Sends DTMF digits over the call.
+- (BOOL)playWavFileDuringCall:(NSString *)filePath;
 - (BOOL)hold;
 - (BOOL)releaseHold;
 - (BOOL)updateContact;
