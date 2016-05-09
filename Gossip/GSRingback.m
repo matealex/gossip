@@ -34,7 +34,7 @@
         _confPort = PJSUA_INVALID_ID;
         _playerId = PJSUA_INVALID_ID;
 
-        _volumeScale = [GSUserAgent sharedAgent].configuration.volumeScale;
+        _volumeScale = [GSUserAgent sharedAgent].configuration.volumeScaleRx;
         _volume = 0.5 / _volumeScale; // half volume by default
 
         // resolve bundle filename

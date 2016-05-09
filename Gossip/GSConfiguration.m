@@ -28,6 +28,7 @@
     _consoleLogLevel = 2;
     
     _transportType = GSUDPTransportType;
+    _qosType = GSQOSTypeBestEffort;
     
     // match clock rate to default number provided by PJSIP.
     // http://www.pjsip.org/pjsip/docs/html/structpjsua__media__config.htm#a24792c277d6c6c309eccda9047f641a5
@@ -37,9 +38,16 @@
     _soundClockRate = 0;
     
     // default volume scale to 2.0 so 1.0 is twice as loud as PJSIP would normally emit.
-    _volumeScale = 2.0;
+    _volumeScaleTx = 2.0;
+    _volumeScaleRx = 2.0;
+
+    // default is to suppress silence (lack of voice)
+    _disableVAD = NO;
     
     _account = [GSAccountConfiguration defaultConfiguration];
+
+    _enableSRV = YES;
+
     return self;
 }
 
@@ -55,10 +63,14 @@
     replica.logLevel = self.logLevel;
     replica.consoleLogLevel = self.consoleLogLevel;
     replica.transportType = self.transportType;
+    replica.qosType = self.qosType;
 
     replica.clockRate = self.clockRate;
     replica.soundClockRate = self.soundClockRate;
-    replica.volumeScale = self.volumeScale;
+    replica.volumeScaleTx = self.volumeScaleTx;
+    replica.volumeScaleRx = self.volumeScaleRx;
+
+    replica.disableVAD = self.disableVAD;
 
     replica.account = [self.account copy];
     return replica;

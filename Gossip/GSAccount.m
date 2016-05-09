@@ -15,6 +15,10 @@
 
 static pjsip_transport *the_transport;
 
+@interface GSAccount()
+@property(nonatomic,strong) NSString *statusText;
+@end
+
 @implementation GSAccount {
     GSAccountConfiguration *_config;
     NSDate *_registrationExpiration;
@@ -49,6 +53,10 @@ static pjsip_transport *the_transport;
                    selector:@selector(transportStateDidChange:)
                        name:GSSIPTransportStateDidChangeNotification
                      object:[GSDispatch class]];
+        [center addObserver:self
+                   selector:@selector(didReceiveMwiNotification:)
+                       name:GSSIPMwiInfoNotification
+                     object:[GSDispatch class]];
     }
     return self;
 }
@@ -59,7 +67,9 @@ static pjsip_transport *the_transport;
 
     GSUserAgent *agent = [GSUserAgent sharedAgent];
     if (_accountId != PJSUA_INVALID_ID && [agent status] != GSUserAgentStateDestroyed) {
-        GSLogIfFails(pjsua_acc_del(_accountId));
+        if (pjsua_acc_is_valid(_accountId)) {
+            GSLogIfFails(pjsua_acc_del(_accountId));
+        }
         _accountId = PJSUA_INVALID_ID;
     }
 
@@ -109,6 +119,9 @@ static pjsip_transport *the_transport;
     accConfig.cred_info[0] = creds;
     accConfig.reg_timeout = [configuration.registrationTimeout intValue];
 
+    // TROY - CT - Allow setting of this by the caller
+    accConfig.use_rfc5626 = _config.useRfc5626;
+
     // finish
     GSReturnNoIfFails(pjsua_acc_add(&accConfig, PJ_TRUE, &_accountId));    
     return YES;
@@ -125,9 +138,11 @@ static pjsip_transport *the_transport;
 
 - (BOOL)disconnect {
     NSAssert(!!_config, @"GSAccount not configured.");
-        
-    GSReturnNoIfFails(pjsua_acc_set_online_status(_accountId, PJ_FALSE));
-    GSReturnNoIfFails(pjsua_acc_set_registration(_accountId, PJ_FALSE));
+    if (self.status == GSAccountStatusConnected) {
+        GSReturnNoIfFails(pjsua_acc_set_online_status(_accountId, PJ_FALSE));
+        GSReturnNoIfFails(pjsua_acc_set_registration(_accountId, PJ_FALSE));
+    }
+
     return YES;
 }
 
@@ -211,6 +226,7 @@ static pjsip_transport *the_transport;
     
     pjsua_acc_info info;
     GSReturnIfFails(pjsua_acc_get_info(accountId, &info));
+    self.statusText = [[GSPJUtil stringWithPJString:&info.status_text] copy];
 
     if (info.reg_last_err != PJ_SUCCESS) {
         accStatus = GSAccountStatusInvalid;
@@ -275,6 +291,19 @@ static pjsip_transport *the_transport;
         pjsip_transport_dec_ref(the_transport);
         the_transport = NULL;
     }
+}
+
+- (void)didReceiveMwiNotification:(NSNotification *)notif {
+    __block GSAccount *self_ = self;
+    __block id delegate_ = _delegate;
+
+    NSString *msgData = notif.userInfo[GSMsgInfoStringKey];
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (![delegate_ respondsToSelector:@selector(accountDidReceiveMwiNotification:msgData:)])
+            return; // call is disposed/hungup on dealloc
+        [delegate_ accountDidReceiveMwiNotification:self_ msgData:msgData];
+    });
 }
 
 @end

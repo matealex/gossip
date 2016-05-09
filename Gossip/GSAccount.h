@@ -27,6 +27,7 @@ typedef enum {
 /** Call GSCall::begin to accept incoming call or GSCall::end to deny. 
  *  This should be done in a timely fashion since we do not support timeouts for incoming call yet. */
 - (void)account:(GSAccount *)account didReceiveIncomingCall:(GSCall *)call withMessage:(NSString*)message;
+- (void)accountDidReceiveMwiNotification:(GSAccount *)account msgData:(NSString *)msgData;
 
 @end
 
@@ -49,4 +50,5 @@ typedef enum {
 - (BOOL)disconnect; ///< Unregister from the SIP registration server and disconnects.
 - (void)startKeepAlive;
 - (void)performKeepAlive;
+- (NSString *)statusText; ///< info.status_text from the underlying pjsip `info` data structure
 @end

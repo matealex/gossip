@@ -115,19 +115,21 @@
     pjsua_media_config_default(&mediaConfig);
     mediaConfig.clock_rate = _config.clockRate;
     mediaConfig.snd_clock_rate = _config.soundClockRate;
-    mediaConfig.ec_tail_len = 500; // change echo Tail Length to 500ms
-    mediaConfig.no_vad = 1; //disable VoiceActivityDetection
+    mediaConfig.ec_tail_len = config.echoCancelationTail;
+    mediaConfig.no_vad = config.disableVAD ? 1 : 0;
     
     GSReturnNoIfFails(pjsua_init(&uaConfig, &logConfig, &mediaConfig));
     
     // Configure the DNS resolvers to also handle SRV records
-    pjsip_endpoint* endpoint = pjsua_get_pjsip_endpt();
-    pj_dns_resolver* resolver;
-    pj_str_t google_dns = [GSPJUtil PJStringWithString:@"8.8.8.8"];
-    struct pj_str_t servers[] = { google_dns };
-    GSReturnNoIfFails(pjsip_endpt_create_resolver(endpoint, &resolver));
-    GSReturnNoIfFails(pj_dns_resolver_set_ns(resolver, 1, servers, nil));
-    GSReturnNoIfFails(pjsip_endpt_set_resolver(endpoint, resolver));
+    if (config.enableSRV) {
+        pjsip_endpoint* endpoint = pjsua_get_pjsip_endpt();
+        pj_dns_resolver* resolver;
+        pj_str_t google_dns = [GSPJUtil PJStringWithString:@"8.8.8.8"];
+        struct pj_str_t servers[] = { google_dns };
+        GSReturnNoIfFails(pjsip_endpt_create_resolver(endpoint, &resolver));
+        GSReturnNoIfFails(pj_dns_resolver_set_ns(resolver, 1, servers, nil));
+        GSReturnNoIfFails(pjsip_endpt_set_resolver(endpoint, resolver));
+    }
     
     // create UDP transport
     // TODO: Make configurable? (which transport type to use/other transport opts)
@@ -135,8 +137,15 @@
     pjsua_transport_config transportConfig;
     pjsua_transport_config_default(&transportConfig);
     transportConfig.port = 5060;
-    transportConfig.qos_type = PJ_QOS_TYPE_CONTROL;
     
+    switch (_config.qosType) {
+        case GSQOSTypeBestEffort: transportConfig.qos_type = PJ_QOS_TYPE_BEST_EFFORT; break;
+        case GSQOSTypeBackground: transportConfig.qos_type = PJ_QOS_TYPE_BACKGROUND; break;
+        case GSQOSTypeVideo: transportConfig.qos_type = PJ_QOS_TYPE_VIDEO; break;
+        case GSQOSTypeVoice: transportConfig.qos_type = PJ_QOS_TYPE_VOICE; break;
+        case GSQOSTypeControl: transportConfig.qos_type = PJ_QOS_TYPE_CONTROL; break;
+    }
+
     pjsip_transport_type_e transportType = 0;
     switch (_config.transportType) {
         case GSUDPTransportType: transportType = PJSIP_TRANSPORT_UDP; break;
@@ -151,7 +160,6 @@
     if (status != PJ_SUCCESS) {
         pjsua_transport_config_default(&transportConfig);
         transportConfig.port = 0;
-        transportConfig.qos_type = PJ_QOS_TYPE_CONTROL;
         GSReturnNoIfFails(pjsua_transport_create(transportType, &transportConfig, &_transportId));
     }
     [self setStatus:GSUserAgentStateConfigured];

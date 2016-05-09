@@ -19,6 +19,14 @@ typedef enum {
     GSTLS6TransportType /// TLS on IPv6 transport type.
 } GSTransportType;
 
+typedef enum {
+    GSQOSTypeBestEffort,
+    GSQOSTypeBackground,
+    GSQOSTypeVideo,
+    GSQOSTypeVoice,
+    GSQOSTypeControl
+} GSQosType;
+
 
 /// Main class for configuring a SIP user agent.
 @interface GSConfiguration : NSObject <NSCopying>
@@ -27,10 +35,16 @@ typedef enum {
 @property (nonatomic) unsigned int consoleLogLevel; ///< PJSIP console output level.
 
 @property (nonatomic) GSTransportType transportType; ///< Transport type to use for connection.
+@property (nonatomic) GSQosType qosType; ///< QOS type used for connection.
 
 @property (nonatomic) unsigned int clockRate; ///< PJSIP clock rate.
 @property (nonatomic) unsigned int soundClockRate; ///< PJSIP sound clock rate.
-@property (nonatomic) float volumeScale; ///< Used for scaling volumes up and down.
+@property (nonatomic) float volumeScaleTx; ///< Used for scaling volumes up and down.
+@property (nonatomic) float volumeScaleRx; ///< Used for scaling volumes up and down.
+@property (nonatomic) BOOL disableVAD; ///< When YES, voice audio detection is disabled.  Default is NO (enabled).
+@property (nonatomic) BOOL enableSRV; ///< Sets DNS to use 8.8.8.8 - beware if the carrier blocks this
+
+@property (nonatomic) unsigned int echoCancelationTail;
 
 @property (nonatomic, strong) GSAccountConfiguration *account;
 
