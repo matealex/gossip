@@ -17,6 +17,7 @@ GSConstDefine(GSSIPCallStateDidChangeNotification);
 GSConstDefine(GSSIPIncomingCallNotification);
 GSConstDefine(GSSIPCallMediaStateDidChangeNotification);
 GSConstDefine(GSSIPVolumeDidChangeNotification);
+GSConstDefine(GSSIPMwiInfoNotification);
 
 GSConstDefine(GSVolumeDidChangeNotification);
 
@@ -25,6 +26,7 @@ GSConstDefine(GSSIPRegInfoKey);
 GSConstDefine(GSSIPRenewKey);
 GSConstDefine(GSSIPCallIdKey);
 GSConstDefine(GSSIPDataKey);
+GSConstDefine(GSMsgInfoStringKey);
 
 GSConstDefine(GSSIPTransportKey);
 GSConstDefine(GSSIPTransportStateKey);
