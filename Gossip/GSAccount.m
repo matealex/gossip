@@ -131,6 +131,14 @@ static pjsip_transport *the_transport;
     return YES;
 }
 
+- (void)startKeepAlive{
+    pjsua_acc_set_online_status(_accountId, PJ_TRUE);
+}
+
+-(void)performKeepAlive{
+    pj_thread_sleep(5000);
+}
+
 
 - (void)setStatus:(GSAccountStatus)newStatus {
     if (_status == newStatus) // don't send KVO notices unless it really changes.

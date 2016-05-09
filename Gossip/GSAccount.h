@@ -47,4 +47,6 @@ typedef enum {
 - (BOOL)handleIPChange;
 - (BOOL)connect; ///< Connects and begin registering with the configured SIP registration server.
 - (BOOL)disconnect; ///< Unregister from the SIP registration server and disconnects.
+- (void)startKeepAlive;
+- (void)performKeepAlive;
 @end
