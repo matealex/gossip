@@ -67,6 +67,7 @@ typedef NS_ENUM(NSInteger, GSCallMediaState) {
 - (BOOL)sendDTMFDigits:(NSString *)digits; ///< Sends DTMF digits over the call.
 - (BOOL)hold;
 - (BOOL)releaseHold;
+- (BOOL)updateContact;
 
 - (BOOL)disconnectAudioForGSMCall; /// Stop the PJSIP call when a GSM call comes in
 - (BOOL)reconnectAudioAfterGSMCall; /// Reestablish the PJSIP call after the GSM call ends

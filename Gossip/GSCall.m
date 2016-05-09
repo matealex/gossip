@@ -187,6 +187,11 @@
     return YES;
 }
 
+- (BOOL)updateContact {
+    GSReturnNoIfFails(pjsua_call_reinvite(_callId, PJSUA_CALL_UPDATE_CONTACT, nil));
+    return YES;
+}
+
 - (BOOL)disconnectAudioForGSMCall
 {
     pjsua_set_no_snd_dev();
