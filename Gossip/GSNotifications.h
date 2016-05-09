@@ -32,4 +32,5 @@ GSConstDefine(GSMicVolumeKey);
 #define GSNotifGetInt(notif_, key_) ([[[notif_ userInfo] objectForKey:key_] intValue])
 #define GSNotifGetBool(notif_, key_) ([[[notif_ userInfo] objectForKey:key_] boolValue])
 #define GSNotifGetString(info_, key_) ((NSString *)[[notif_ userInfo] objectForKey:key_]) 
+#define GSNotifGetPointer(notif_, key_) ([[[notif_ userInfo] objectForKey:key_] pointerValue])
 

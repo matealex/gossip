@@ -129,6 +129,8 @@
 - (void)didReceiveIncomingCall:(NSNotification *)notif {
     pjsua_acc_id accountId = GSNotifGetInt(notif, GSSIPAccountIdKey);
     pjsua_call_id callId = GSNotifGetInt(notif, GSSIPCallIdKey);
+    pjsip_rx_data * data = GSNotifGetPointer(notif, GSSIPDataKey);
+
     if (accountId == PJSUA_INVALID_ID || accountId != _accountId)
         return;
     
@@ -136,12 +138,10 @@
     __block id delegate_ = _delegate;
     dispatch_async(dispatch_get_main_queue(), ^{
         GSCall *call = [GSCall incomingCallWithId:callId toAccount:self_];
-        if (![delegate_ respondsToSelector:@selector(account:didReceiveIncomingCall:)])
+        if (![delegate_ respondsToSelector:@selector(account:didReceiveIncomingCall:withMessage:)])
             return; // call is disposed/hungup on dealloc
+        [delegate_ account:self didReceiveIncomingCall:call withMessage:[NSString stringWithUTF8String:data->msg_info.msg_buf]];
         
-        [delegate_ performSelector:@selector(account:didReceiveIncomingCall:)
-                        withObject:self_
-                        withObject:call];
     });
 }
 

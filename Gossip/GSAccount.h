@@ -26,7 +26,7 @@ typedef enum {
 /// Called when an account recieves an incoming call.
 /** Call GSCall::begin to accept incoming call or GSCall::end to deny. 
  *  This should be done in a timely fashion since we do not support timeouts for incoming call yet. */
-- (void)account:(GSAccount *)account didReceiveIncomingCall:(GSCall *)call;
+- (void)account:(GSAccount *)account didReceiveIncomingCall:(GSCall *)call withMessage:(NSString*)message;
 
 @end
 
