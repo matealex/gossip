@@ -33,6 +33,8 @@ typedef enum {
 @property (nonatomic) float volumeScale; ///< Used for scaling volumes up and down.
 @property (nonatomic) BOOL enableSRV; ///< Sets DNS to use 8.8.8.8 - beware if the carrier blocks this
 
+@property (nonatomic) unsigned int echoCancelationTail;
+
 @property (nonatomic, strong) GSAccountConfiguration *account;
 
 + (id)defaultConfiguration;
