@@ -40,6 +40,9 @@
     _volumeScale = 2.0;
     
     _account = [GSAccountConfiguration defaultConfiguration];
+
+    _enableSRV = YES;
+
     return self;
 }
 
