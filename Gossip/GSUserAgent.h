@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "GSAccount.h"
 #import "GSConfiguration.h"
+#import "PJSIP.h"
 
 
 typedef enum {
@@ -32,6 +33,7 @@ typedef enum {
 
 @property (nonatomic, strong, readonly) GSAccount *account; ///< Default GSAccount instance with the configured SIP account registration.
 @property (nonatomic, readonly) GSUserAgentState status; ///< User agent configuration state. Supports KVO notification.
+@property (nonatomic, readonly) pjmedia_port *tone_generator; ///< Tone generator
 
 /// Obtains the shared user agent instance.
 + (GSUserAgent *)sharedAgent;
@@ -59,5 +61,7 @@ typedef enum {
 
 /// Gets an array of GSCodecInfo for codecs loaded by PJSIP.
 - (NSArray *)arrayOfAvailableCodecs;
+
+- (void) initializeToneGenerator;
 
 @end

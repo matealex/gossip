@@ -10,13 +10,17 @@
 #import "GSCodecInfo.h"
 #import "GSCodecInfo+Private.h"
 #import "GSDispatch.h"
-#import "PJSIP.h"
 #import "Util.h"
 
 
 @implementation GSUserAgent {
     GSConfiguration *_config;
     pjsua_transport_id _transportId;
+
+    pj_caching_pool _cp;
+    pj_pool_t *_gpool;
+    //pjmedia_port *_tone_generator;
+    pjmedia_snd_port *_inputOutput;
 }
 
 @synthesize account = _account;
@@ -36,6 +40,10 @@
         _account = nil;
         _config = nil;
         
+        _gpool = nil;
+        _tone_generator = nil;
+        _inputOutput = nil;
+
         _transportId = PJSUA_INVALID_ID;
         _status = GSUserAgentStateUninitialized;
     }
@@ -47,11 +55,11 @@
         pjsua_transport_close(_transportId, PJ_TRUE);
         _transportId = PJSUA_INVALID_ID;
     }
-    
+
     if (_status >= GSUserAgentStateConfigured) {
         pjsua_destroy();
     }
-    
+
     _account = nil;
     _config = nil;
     _status = GSUserAgentStateDestroyed;
@@ -148,11 +156,53 @@
 - (BOOL)start {
     GSReturnNoIfFails(pjsua_start());
     [self setStatus:GSUserAgentStateStarted];
+
+    [self initializeToneGenerator];
+
     return YES;
 }
 
+
+- (void) initializeToneGenerator{
+
+	pj_caching_pool_init(&_cp, &pj_pool_factory_default_policy, 0);
+	_gpool = pj_pool_create(&_cp.factory, "app", 4000, 4000, NULL);
+	pjmedia_tonegen_create(_gpool, 8000, 1, 160, 16, 0, &_tone_generator);
+
+	pjmedia_snd_port_create_player(_gpool, 0, 8000, 1, 160, 16, 0, &_inputOutput);
+
+	// When you minimize the app right after you start it, _inputOutput is nil,
+	// which will cause an assertion error on pjmedia_snd_port_connect call (which checks for not null parameters).
+	if (!_inputOutput || !_tone_generator) {
+		return;
+	}
+
+	pjmedia_snd_port_connect(_inputOutput, _tone_generator);
+}
+
+
 - (BOOL)reset {
     [_account disconnect];
+
+    [[NSNotificationCenter defaultCenter] removeObserver:_account];
+
+    // tone generator
+    if(_tone_generator) {
+        pjmedia_port_destroy(_tone_generator);
+        _tone_generator = nil;
+    }
+    if(_inputOutput) {
+        pjmedia_snd_port_disconnect(_inputOutput);
+		pjmedia_snd_port_destroy(_inputOutput);
+        _inputOutput = nil;
+    }
+    if(_gpool) {
+        pj_pool_release(_gpool);
+        _gpool = nil;
+    }
+    if(_cp.lock)
+        pj_caching_pool_destroy(&_cp);
+
 
     // needs to nil account before pjsua_destroy so pjsua_acc_del succeeds.
     _transportId = PJSUA_INVALID_ID;
