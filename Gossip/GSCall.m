@@ -22,6 +22,7 @@
     float _volume;
     float _micVolume;
     float _volumeScale;
+    NSTimer *_timer;
 }
 
 + (id)outgoingCallToUri:(NSString *)remoteUri fromAccount:(GSAccount *)account {
@@ -106,6 +107,12 @@
     [self willChangeValueForKey:@"status"];
     _status = status;
     [self didChangeValueForKey:@"status"];
+}
+
+- (void)setCallDuration:(long)duration {
+    [self willChangeValueForKey:@"duration"];
+    _callDuration = duration;
+    [self didChangeValueForKey:@"duration"];
 }
 
 
@@ -204,7 +211,13 @@
     }
     
     __block id self_ = self;
-    dispatch_async(dispatch_get_main_queue(), ^{ [self_ setStatus:callStatus]; });
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self_ setStatus:callStatus];
+        if(callStatus == GSCallStatusConnected)
+            _timer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self_ selector:@selector(updateCallDuration:) userInfo:nil repeats:YES];
+        if(callStatus == GSCallStatusDisconnected && _timer!=nil && _timer.isValid)
+            [_timer invalidate];
+    });
 }
 
 - (void)callMediaStateDidChange:(NSNotification *)notif {
@@ -221,6 +234,23 @@
         GSReturnIfFails(pjsua_conf_connect(0, callPort));
         
         [self adjustVolume:_volume mic:_micVolume];
+    }
+}
+
+- (void)updateCallDuration:(NSTimer*)t {
+    pjsua_config ua_cfg;
+    pjsua_config_default(&ua_cfg);
+    if(_callId<0 || _callId>=(int)ua_cfg.max_calls) {
+        // Call is invalid
+        return;
+    }
+
+    pjsua_call_info callInfo;
+    pjsua_call_get_info(_callId, &callInfo);
+
+    if(callInfo.connect_duration.sec>0) {
+        __block id self_ = self;
+        dispatch_async(dispatch_get_main_queue(), ^{ [self_ setCallDuration:callInfo.connect_duration.sec]; });
     }
 }
 
