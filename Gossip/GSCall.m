@@ -51,6 +51,7 @@
         _account = account;
         _status = GSCallStatusReady;
         _callId = PJSUA_INVALID_ID;
+        _mediaState = GSCallMediaStateNone;
         
         _ringback = nil;
         if (config.enableRingback) {
@@ -118,6 +119,11 @@
     [self didChangeValueForKey:@"duration"];
 }
 
+- (void)setMediaState:(GSCallMediaState)mediaState {
+    [self willChangeValueForKey:@"mediaState"];
+    _mediaState = mediaState;
+    [self didChangeValueForKey:@"mediaState"];
+}
 
 - (float)volume {
     return _volume;
@@ -255,6 +261,32 @@
     pjsua_call_info callInfo;
     GSReturnIfFails(pjsua_call_get_info(_callId, &callInfo));
     
+    GSCallMediaState mediaState = GSCallMediaStateNone;
+    switch (callInfo.media_status) {
+        case PJSUA_CALL_MEDIA_NONE:
+            mediaState = GSCallMediaStateNone;
+            break;
+
+        case PJSUA_CALL_MEDIA_ACTIVE:
+            mediaState = GSCallMediaStateActive;
+            break;
+
+        case PJSUA_CALL_MEDIA_LOCAL_HOLD:
+            mediaState = GSCallMediaStateLocalHold;
+            break;
+
+        case PJSUA_CALL_MEDIA_REMOTE_HOLD:
+            mediaState = GSCallMediaStateRemoteHold;
+            break;
+
+        case PJSUA_CALL_MEDIA_ERROR:
+            mediaState = GSCallMediaStateError;
+            break;
+    }
+
+    __block id self_ = self;
+    dispatch_async(dispatch_get_main_queue(), ^{ [self_ setMediaState:mediaState]; });
+
     if (callInfo.media_status == PJSUA_CALL_MEDIA_ACTIVE) {
         pjsua_conf_port_id callPort = pjsua_call_get_conf_port(_callId);
         GSReturnIfFails(pjsua_conf_connect(callPort, 0));
