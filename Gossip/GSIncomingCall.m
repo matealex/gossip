@@ -38,4 +38,14 @@
     return YES;
 }
 
+- (void)ackgnowlege{
+    if (self.callId == PJSUA_INVALID_ID) {
+        return;
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        pjsua_call_answer(self.callId, 180, NULL, NULL);
+    });
+}
+
 @end
