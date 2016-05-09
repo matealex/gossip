@@ -12,5 +12,6 @@
 
 - (id)initWithCallId:(int)callId toAccount:(GSAccount *)account;
 - (void)ackgnowlege;
+- (BOOL)ignore;
 
 @end
