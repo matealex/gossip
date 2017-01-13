@@ -181,20 +181,23 @@
 
 
 - (void) initializeToneGenerator{
+    if(self.status == GSUserAgentStateStarted)
+	{
+		pj_caching_pool_init(&_cp, &pj_pool_factory_default_policy, 0);
+		_gpool = pj_pool_create(&_cp.factory, "app", 4000, 4000, NULL);
+		pjmedia_tonegen_create(_gpool, 8000, 1, 160, 16, 0, &_tone_generator);
 
-	pj_caching_pool_init(&_cp, &pj_pool_factory_default_policy, 0);
-	_gpool = pj_pool_create(&_cp.factory, "app", 4000, 4000, NULL);
-	pjmedia_tonegen_create(_gpool, 8000, 1, 160, 16, 0, &_tone_generator);
+		pjmedia_snd_port_create_player(_gpool, 0, 8000, 1, 160, 16, 0, &_inputOutput);
 
-	pjmedia_snd_port_create_player(_gpool, 0, 8000, 1, 160, 16, 0, &_inputOutput);
+		// When you minimize the app right after you start it, _inputOutput is nil,
+		// which will cause an assertion error on pjmedia_snd_port_connect call (which checks for not null parameters).
+		if (!_inputOutput || !_tone_generator)
+		{
+			return;
+		}
 
-	// When you minimize the app right after you start it, _inputOutput is nil,
-	// which will cause an assertion error on pjmedia_snd_port_connect call (which checks for not null parameters).
-	if (!_inputOutput || !_tone_generator) {
-		return;
+		pjmedia_snd_port_connect(_inputOutput, _tone_generator);
 	}
-
-	pjmedia_snd_port_connect(_inputOutput, _tone_generator);
 }
 
 
