@@ -248,7 +248,9 @@ static pjsip_transport *the_transport;
 
         } else {
             if (code == 408) {
-                [self connect];
+				dispatch_async(dispatch_get_main_queue(), ^(){
+					[self connect];
+				});
             }
             accStatus = GSAccountStatusInvalid;
         }
