@@ -147,27 +147,41 @@
         case GSQOSTypeControl: transportConfig.qos_type = PJ_QOS_TYPE_CONTROL; break;
     }
 
-    pjsip_transport_type_e transportType = 0;
     switch (_config.transportType) {
-        case GSUDPTransportType: transportType = PJSIP_TRANSPORT_UDP; break;
-        case GSUDP6TransportType: transportType = PJSIP_TRANSPORT_UDP6; break;
-        case GSTCPTransportType: transportType = PJSIP_TRANSPORT_TCP; break;
-        case GSTCP6TransportType: transportType = PJSIP_TRANSPORT_TCP6; break;
-        case GSTLSTransportType: transportType = PJSIP_TRANSPORT_TLS; break;
-        case GSTLS6TransportType: transportType = PJSIP_TRANSPORT_TLS6; break;
+        case GSUDPTransportType:
+		case GSUDP6TransportType:
+			[self createTransport:PJSIP_TRANSPORT_UDP transportConfig:transportConfig];
+			[self createTransport:PJSIP_TRANSPORT_UDP6 transportConfig:transportConfig];
+			break;
+
+        case GSTCPTransportType:
+		case GSTCP6TransportType:
+			[self createTransport:PJSIP_TRANSPORT_TCP transportConfig:transportConfig];
+			[self createTransport:PJSIP_TRANSPORT_TCP6 transportConfig:transportConfig];
+			break;
+
+        case GSTLSTransportType:
+		case GSTLS6TransportType:
+			[self createTransport:PJSIP_TRANSPORT_TLS transportConfig:transportConfig];
+			[self createTransport:PJSIP_TRANSPORT_TLS6 transportConfig:transportConfig];
+			break;
     }
 
+	[self setStatus:GSUserAgentStateConfigured];
+
+    // configure account
+    _account = [[GSAccount alloc] init];
+    return [_account configure:_config.account];
+}
+
+- (BOOL) createTransport:(pjsip_transport_type_e) transportType transportConfig:(pjsua_transport_config) transportConfig{
     pj_status_t status = (pjsua_transport_create(transportType, &transportConfig, &_transportId));
     if (status != PJ_SUCCESS) {
         pjsua_transport_config_default(&transportConfig);
         transportConfig.port = 0;
         GSReturnNoIfFails(pjsua_transport_create(transportType, &transportConfig, &_transportId));
     }
-    [self setStatus:GSUserAgentStateConfigured];
-
-    // configure account
-    _account = [[GSAccount alloc] init];
-    return [_account configure:_config.account];
+	return YES;
 }
 
 
