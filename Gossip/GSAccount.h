@@ -38,6 +38,7 @@ typedef enum {
 @property (nonatomic, readonly) int accountId; ///< Account Id, automatically assigned by PJSIP.
 @property (nonatomic, readonly) GSAccountStatus status; ///< Account registration status. Supports KVO notification.
 @property (nonatomic, readonly) NSDate *registrationExpiration; ///< Account registration status. Supports KVO notification.
+@property (nonatomic, readonly) GSAccountConfiguration *config;
 
 @property (nonatomic, weak) id<GSAccountDelegate> delegate; ///< Account activity delegate.
 

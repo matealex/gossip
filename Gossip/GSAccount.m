@@ -17,10 +17,10 @@ static pjsip_transport *the_transport;
 
 @interface GSAccount()
 @property(nonatomic,strong) NSString *statusText;
+@property (nonatomic, readwrite) GSAccountConfiguration *config;
 @end
 
 @implementation GSAccount {
-    GSAccountConfiguration *_config;
     NSDate *_registrationExpiration;
     BOOL isChangingIP;
     int transportReferenceCount;
