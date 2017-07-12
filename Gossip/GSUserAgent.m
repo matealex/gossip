@@ -117,6 +117,7 @@
     mediaConfig.snd_clock_rate = _config.soundClockRate;
     mediaConfig.ec_tail_len = config.echoCancelationTail;
     mediaConfig.no_vad = config.disableVAD ? 1 : 0;
+	mediaConfig.enable_ice = 1;
     
     GSReturnNoIfFails(pjsua_init(&uaConfig, &logConfig, &mediaConfig));
     
