@@ -31,6 +31,7 @@
     _username = nil;
     _password = nil;
     _userAgent = nil;
+    _useipv6 = NO;
 
     _enableRingback = YES;
     _ringbackFilename = @"ringtone.wav";
@@ -67,6 +68,7 @@
     replica.username = self.username;
     replica.password = self.password;
     replica.userAgent = self.userAgent;
+    replica.useipv6 = self.useipv6;
 
     replica.registrationTimeout = self.registrationTimeout;
 

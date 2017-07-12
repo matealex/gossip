@@ -20,6 +20,7 @@
 @property (nonatomic, copy) NSString *password; ///< SIP password.
 @property (nonatomic, copy) NSString *userAgent; ///< SIP user-agent
 @property (nonatomic, copy) NSNumber *registrationTimeout; ///< Reg expiration.
+@property (nonatomic) BOOL useipv6;
 
 @property (nonatomic) BOOL enableStatusPublishing; ///< Enable online/status publishing for services that support them.
 

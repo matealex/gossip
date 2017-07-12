@@ -122,6 +122,9 @@ static pjsip_transport *the_transport;
     // TROY - CT - Allow setting of this by the caller
     accConfig.use_rfc5626 = _config.useRfc5626;
 
+	if(_config.useipv6){
+		accConfig.ipv6_media_use = PJSUA_IPV6_ENABLED;
+	}
     // finish
     GSReturnNoIfFails(pjsua_acc_add(&accConfig, PJ_TRUE, &_accountId));    
     return YES;
